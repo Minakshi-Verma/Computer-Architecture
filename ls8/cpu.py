@@ -9,7 +9,7 @@ class CPU:
         """Construct a new CPU."""        
         self.ram= [0]* 256      #  hold 256 bytes of memory
         self.reg =[0]*8         #  hold 8 general-purpose registers
-        self.pc = 0             # program counter
+        self.pc = 0             # program counter or instruction pointer or pointer that tells where are we in memory lane
     
     #ram_read() that accepts the address to read and return the value stored there.
     # Memory Address Register (MAR)
@@ -21,27 +21,61 @@ class CPU:
     def ram_write(self, mar,mdr):
         self.ram[mar] = mdr
 
-
-    def load(self):
+    
+    def load(self,prog):
         """Load a program into memory."""
 
-        address = 0
+        # address = 0
+        try:  
+            address = 0    
+            with open(prog) as program:
+                for line in program:
+                    split_line = line.split('#')[0]
+                    command = split_line.strip()
 
-        # For now, we've just hardcoded a program:
+                    if command == '':
+                        continue
 
-        program = [
-            # From print8.ls8
-            0b10000010, # LDI R0,8
-            0b00000000,
-            0b00001000,
-            0b01000111, # PRN R0
-            0b00000000,
-            0b00000001, # HLT
-        ]
+                    instruction = int(command, 2)
+                    self.ram[address] = instruction
 
-        for instruction in program:
-            self.ram[address] = instruction
-            address += 1
+                    address += 1
+
+        except FileNotFoundError:
+            print(f'{sys.argv[0]}: {sys.argv[1]} file was not found')
+            sys.exit()
+
+    if len(sys.argv) < 2:
+        print("Please pass in a second filename: python3 ls8.py second_filename.py")
+        sys.exit()
+
+    prog = sys.argv[1]
+   
+        #-----------------
+    # Our previous hard coded load function
+
+    #  def load(self):
+    #     """Load a program into memory."""
+
+    #     address = 0
+
+    #     # For now, we've just hardcoded a program:
+
+    #     program = [
+    #         # From print8.ls8
+    #         0b10000010, # LDI R0,8
+    #         0b00000000,
+    #         0b00001000,
+    #         0b01000111, # PRN R0
+    #         0b00000000,
+    #         0b00000001, # HLT
+    #     ]
+
+    #     for instruction in program:
+    #         self.ram[address] = instruction
+    #         address += 1
+            #________________
+        
 
 
     def alu(self, op, reg_a, reg_b):
@@ -77,29 +111,40 @@ class CPU:
         """Run the CPU."""
         #machine codes--opcode       
         
-        LDI = 0b10000010   #This instruction sets a specified register to a specified value.
-        PRN = 0b01000111   #Print numeric decimal integer value that is stored in the given register
-        HLT = 0b00000001   #Halt the CPU (and exit the emulator).   
-        
+        LDI = 0b10000010   # opcode1, This instruction sets a specified register to a specified value(List data item)
+        PRN = 0b01000111   #opcode2, Print numeric decimal integer value that is stored in the given register
+        HLT = 0b00000001   #opcode 3, Halt the CPU (and exit the emulator).
+        MUL =  0b10100010  # opcode 4, multiply tthe values in two resistors and store the value in registerA       
+       
+
         running = True
 
         while running:
             command = self.ram_read(self.pc)
-            operand_a = self.ram_read(self.pc+1)  # variable 1
-            operand_b = self.ram_read(self.pc+2)   # variable 2
+            # Not all the commands need operands so we will get list index error if we put it here.
+            # operand_a = self.ram_read(self.pc+1)  # variable 1
+            # operand_b = self.ram_read(self.pc+2)   # variable 2
                      
             if command == HLT:
                 # exit the running operation
                 running = False
                 self.pc +=1
             elif command == LDI:
-                # sets the value of register to an integer
+                operand_a = self.ram_read(self.pc+1)  # variable 1
+                operand_b = self.ram_read(self.pc+2)   # variable 2
+                # sets the value of register to an integer                
                 self.reg[operand_a]= operand_b
                 self.pc +=3
             elif command == PRN:
                 print(self.reg[operand_a])
                 self.pc +=1
-            
-
+            elif command ==MUL:
+                operand_a = self.ram_read(self.pc+1)  # variable 1
+                operand_b = self.ram_read(self.pc+2)   # variable 2
+                num1 = self.reg[operand_a]
+                num2 = self.reg[operand_b]
+                product = num1* num2
+                self.reg[operand_a]= product
+                self.pc +=3
 
 
