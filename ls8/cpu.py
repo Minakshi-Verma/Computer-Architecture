@@ -1,15 +1,18 @@
 """CPU functionality."""
 
 import sys
+sp =7 # reference for stack pointer 
 
 class CPU:
     """Main CPU class."""
 
     def __init__(self):
         """Construct a new CPU."""        
-        self.ram= [0]* 256      #  hold 256 bytes of memory
-        self.reg =[0]*8         #  hold 8 general-purpose registers
-        self.pc = 0             # program counter or instruction pointer or pointer that tells where are we in memory lane
+        self.ram= [0]* 256   #  hold 256 bytes of memory
+        self.reg =[0]*8      #  hold 8 general-purpose registers
+        self.pc = 0          # program counter 
+
+        self.reg[sp] = 0xF4  # sp pointer at the address 0xF4 if stack is empty
     
     #ram_read() that accepts the address to read and return the value stored there.
     # Memory Address Register (MAR)
@@ -30,16 +33,19 @@ class CPU:
             address = 0    
             with open(prog) as program:
                 for line in program:
-                    split_line = line.split('#')[0]
+                    split_line = line.split('#')[0]                   
                     command = split_line.strip()
+                    # print(type(command))
+                    # print(command)
 
                     if command == '':
                         continue
 
                     instruction = int(command, 2)
                     self.ram[address] = instruction
+                    # print(instruction)            
 
-                    address += 1
+                    address += 1                  
 
         except FileNotFoundError:
             print(f'{sys.argv[0]}: {sys.argv[1]} file was not found')
@@ -49,7 +55,7 @@ class CPU:
         print("Please pass in a second filename: python3 ls8.py second_filename.py")
         sys.exit()
 
-    prog = sys.argv[1]
+    # prog = sys.argv[1]
    
         #-----------------
     # Our previous hard coded load function
@@ -111,40 +117,67 @@ class CPU:
         """Run the CPU."""
         #machine codes--opcode       
         
-        LDI = 0b10000010   # opcode1, This instruction sets a specified register to a specified value(List data item)
+        LDI = 0b10000010   # opcode1, This instruction sets a specified register to a specified value(List data item), takes only 1 operand( determine from 1st 2 values)
         PRN = 0b01000111   #opcode2, Print numeric decimal integer value that is stored in the given register
         HLT = 0b00000001   #opcode 3, Halt the CPU (and exit the emulator).
-        MUL =  0b10100010  # opcode 4, multiply tthe values in two resistors and store the value in registerA       
-       
+        MUL =  0b10100010  # opcode 4, multiply the values in two resistors and store the value in registerA  
+        PUSH = 0b01000101
+        POP = 0b01000110     
 
         running = True
 
         while running:
             command = self.ram_read(self.pc)
-            # Not all the commands need operands so we will get list index error if we put it here.
-            # operand_a = self.ram_read(self.pc+1)  # variable 1
-            # operand_b = self.ram_read(self.pc+2)   # variable 2
+           
+            operand_a = self.ram_read(self.pc+1)  # variable 1
+            operand_b = self.ram_read(self.pc+2)   # variable 2
                      
             if command == HLT:
                 # exit the running operation
                 running = False
                 self.pc +=1
-            elif command == LDI:
-                operand_a = self.ram_read(self.pc+1)  # variable 1
-                operand_b = self.ram_read(self.pc+2)   # variable 2
+            elif command == LDI:              
                 # sets the value of register to an integer                
                 self.reg[operand_a]= operand_b
                 self.pc +=3
             elif command == PRN:
                 print(self.reg[operand_a])
                 self.pc +=1
-            elif command ==MUL:
-                operand_a = self.ram_read(self.pc+1)  # variable 1
-                operand_b = self.ram_read(self.pc+2)   # variable 2
+            elif command ==MUL:               
                 num1 = self.reg[operand_a]
                 num2 = self.reg[operand_b]
                 product = num1* num2
                 self.reg[operand_a]= product
                 self.pc +=3
+            elif command ==PUSH:
+                #decrement the stack pointer (SP)
+                self.reg[sp] -=1
+
+                #get the address of register and the value
+                data_to_push = self.reg[operand_a]              
+
+                #write/push the value at stack pointer(SP)address                              
+                self.ram_write(self.reg[sp],data_to_push)
+
+                #increment the program counter(pc)
+                self.pc +=2
+
+            elif command ==POP:
+                #get the stack pointer (where do we look?)
+                # get/read register number to put value in
+                value = self.ram_read(self.reg[sp])              
+
+                # increment the stack pointer
+                self.reg[sp] +=1             
+                
+                # put the value into the given register
+                self.reg[operand_a] = value
+                #increment the program counter(pc)
+                self.pc +=2
+
+              
+
+                
+
 
 
