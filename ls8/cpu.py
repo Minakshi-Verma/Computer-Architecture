@@ -1,7 +1,7 @@
 """CPU functionality."""
 
 import sys
-sp =7 # reference for stack pointer 
+sp =7 # reference for stack pointer (stored at registor 7)
 
 class CPU:
     """Main CPU class."""
@@ -12,7 +12,8 @@ class CPU:
         self.reg =[0]*8      #  hold 8 general-purpose registers
         self.pc = 0          # program counter 
 
-        self.reg[sp] = 0xF4  # sp pointer at the address 0xF4 if stack is empty
+        self.reg[sp] = 0xF4 
+        #OR self.reg[7] = 0xf4    # sp pointer at the address 0xF4 (if stack is empty) and its address is stored at registor 7
     
     #ram_read() that accepts the address to read and return the value stored there.
     # Memory Address Register (MAR)
@@ -42,10 +43,11 @@ class CPU:
                         continue
 
                     instruction = int(command, 2)
-                    self.ram[address] = instruction
+                    # self.ram[address] = instruction
+                    self.ram_write(address ,instruction)
                     # print(instruction)            
 
-                    address += 1                  
+                    address += 1      
 
         except FileNotFoundError:
             print(f'{sys.argv[0]}: {sys.argv[1]} file was not found')
@@ -129,31 +131,35 @@ class CPU:
         while running:
             command = self.ram_read(self.pc)
            
-            operand_a = self.ram_read(self.pc+1)  # variable 1
-            operand_b = self.ram_read(self.pc+2)   # variable 2
-                     
+            operand_a = self.ram_read(self.pc+1)  # variable 1(address)
+            operand_b = self.ram_read(self.pc+2)   # variable 2(value)
+                    
             if command == HLT:
                 # exit the running operation
                 running = False
                 self.pc +=1
+
             elif command == LDI:              
                 # sets the value of register to an integer                
                 self.reg[operand_a]= operand_b
                 self.pc +=3
+
             elif command == PRN:
                 print(self.reg[operand_a])
-                self.pc +=1
+                self.pc +=2
+
             elif command ==MUL:               
                 num1 = self.reg[operand_a]
                 num2 = self.reg[operand_b]
                 product = num1* num2
                 self.reg[operand_a]= product
-                self.pc +=3
+                self.pc +=3         
+
             elif command ==PUSH:
-                #decrement the stack pointer (SP)
+                #decrement the stack pointer (sp)
                 self.reg[sp] -=1
 
-                #get the address of register and the value
+                #get the value from address of register(operand_a) 
                 data_to_push = self.reg[operand_a]              
 
                 #write/push the value at stack pointer(SP)address                              
