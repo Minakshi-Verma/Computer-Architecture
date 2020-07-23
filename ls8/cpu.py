@@ -123,8 +123,11 @@ class CPU:
         PRN = 0b01000111   #opcode2, Print numeric decimal integer value that is stored in the given register
         HLT = 0b00000001   #opcode 3, Halt the CPU (and exit the emulator).
         MUL =  0b10100010  # opcode 4, multiply the values in two resistors and store the value in registerA  
-        PUSH = 0b01000101
-        POP = 0b01000110     
+        PUSH = 0b01000101 #Push the value in the given register on the stack.
+        POP = 0b01000110 #Pop the value at the top of the stack into the given register
+        CALL= 0b01010000 #Calls a subroutine (function) at the address stored in the register. 
+        RET= 0b00010001 #Return from subroutine  
+        ADD = 0b10100000
 
         running = True
 
@@ -180,6 +183,27 @@ class CPU:
                 self.reg[operand_a] = value
                 #increment the program counter(pc)
                 self.pc +=2
+
+            elif command ==ADD:
+                added = self.reg[operand_a]+self.reg[operand_b]
+                self.reg[operand_a] = added
+                self.pc +=3
+            
+            elif command ==CALL:
+                # next instruction address poped and stored/pushed in the stack
+                # decrement Stack Pointer(since we are pushing on stack) 
+                self.reg[sp] -=1
+                #The next instruction is poped and stored on stack(call is 2 bytes intruction so pc+2)
+                self.ram[self.reg[sp]]=self.pc + 2
+                
+               # PC pointer goes to subroutine(ADD in this case)                
+                self.pc= self.reg[operand_a]
+
+            elif command == RET:
+                # pops the stack and bring that instruction back where it was and store the value on PC (to run next)
+                self.pc=self.ram[self.reg[sp]]
+                # increment the stack pointer after pop
+                self.reg[sp] +=1
 
               
 
