@@ -12,8 +12,13 @@ class CPU:
         self.reg =[0]*8      #  hold 8 general-purpose registers
         self.pc = 0          # program counter 
 
-        self.reg[sp] = 0xF4 
-        #OR self.reg[7] = 0xf4    # sp pointer at the address 0xF4 (if stack is empty) and its address is stored at registor 7
+        self.reg[sp] = 0xF4 #OR self.reg[7] = 0xf4    # sp pointer at the  
+                            #address 0xF4 (if stack is empty) and its address is stored at registor 7
+
+        self.equal= 0
+        self.lesser= 0
+        self.greater = 0
+        
     
     #ram_read() that accepts the address to read and return the value stored there.
     # Memory Address Register (MAR)
@@ -85,13 +90,29 @@ class CPU:
             #________________
         
 
-
+    
     def alu(self, op, reg_a, reg_b):
         """ALU operations."""
 
+        # if ALU operation is ADD
         if op == "ADD":
             self.reg[reg_a] += self.reg[reg_b]
         #elif op == "SUB": etc
+
+        #if ALU operation is MULTIPLY(MUL)
+        elif op == "MUL":
+            product = self.reg[reg_a]*self.reg[reg_b]
+            self.reg[reg_a] = product
+        
+        #if ALU operation id COMPARE(CMP)
+        elif op == "CMP":
+            if self.reg[reg_a]== self.reg[reg_b]:
+                self.equal =1
+            if self.reg[reg_a]< self.reg[reg_b]:
+                self.lesser =1
+            if self.reg[reg_a] > self.reg[reg_b]:
+                self.greater = 1
+
         else:
             raise Exception("Unsupported ALU operation")
 
@@ -128,7 +149,7 @@ class CPU:
         CALL= 0b01010000 #Calls a subroutine (function) at the address stored in the register. 
         RET= 0b00010001 #Return from subroutine  
         ADD = 0b10100000
-
+      
         running = True
 
         while running:
@@ -152,11 +173,15 @@ class CPU:
                 self.pc +=2
 
             elif command ==MUL:               
-                num1 = self.reg[operand_a]
-                num2 = self.reg[operand_b]
-                product = num1* num2
-                self.reg[operand_a]= product
-                self.pc +=3         
+                # num1 = self.reg[operand_a]
+                # num2 = self.reg[operand_b]
+                # product = num1* num2
+                # self.reg[operand_a]= product
+                # self.pc +=3  
+
+                #Using ALU
+                self.alu("MUL", operand_a,operand_b) 
+                self.pc +=3      
 
             elif command ==PUSH:
                 #decrement the stack pointer (sp)
@@ -188,6 +213,10 @@ class CPU:
                 added = self.reg[operand_a]+self.reg[operand_b]
                 self.reg[operand_a] = added
                 self.pc +=3
+
+                #using ALU() 
+                # self.alu("ADD",operand_a,operand_b)
+                # self.pc +=3
             
             elif command ==CALL:
                 # next instruction address poped and stored/pushed in the stack
@@ -205,7 +234,9 @@ class CPU:
                 # increment the stack pointer after pop
                 self.reg[sp] +=1
 
-              
+            
+
+           
 
                 
 
