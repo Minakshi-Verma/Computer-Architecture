@@ -149,6 +149,11 @@ class CPU:
         CALL= 0b01010000 #Calls a subroutine (function) at the address stored in the register. 
         RET= 0b00010001 #Return from subroutine  
         ADD = 0b10100000
+        CMP = 0b10100111
+        JMP = 0b01010100
+        JEQ = 0b01010101
+        JNE = 0b01010110
+        
       
         running = True
 
@@ -233,6 +238,32 @@ class CPU:
                 self.pc=self.ram[self.reg[sp]]
                 # increment the stack pointer after pop
                 self.reg[sp] +=1
+
+            elif command == CMP:
+                self.alu("CMP", operand_a, operand_b)
+                self.pc +=3
+
+            elif command == JMP:
+                # jump to the address stored in the register
+                self.pc = self.reg[operand_a]
+            
+            elif command == JEQ:
+                #jump if equal flag is true
+                if self.equal ==1:
+                    self.pc = self.reg[operand_a]
+                else:
+                    #ELSE, skip the command by incrementing the program counter
+                    self.pc +=2
+
+            elif command == JNE:
+                #jump if equal flag is false(set to 0)
+                if self.equal == 0:
+                    self.pc = self.reg[operand_a]
+                else:
+                    #ELSE, skip the command by incrementing the program counter
+                    self.pc +=2
+
+
 
             
 
